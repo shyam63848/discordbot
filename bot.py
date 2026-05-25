@@ -373,15 +373,37 @@ async def hello(ctx):
 @commands.check(is_owner)
 @bot.command()
 async def join(ctx):
-    if ctx.author.voice:
-        channel = ctx.author.voice.channel
 
-        if ctx.voice_client is None:
-            await channel.connect()
+    try:
 
-        await ctx.send("Joined VC")
-    else:
-        await ctx.send("Join VC first")
+        if ctx.author.voice:
+
+            channel = ctx.author.voice.channel
+
+            if ctx.voice_client is None:
+
+                await channel.connect()
+
+            await ctx.send(
+                "Joined VC"
+            )
+
+        else:
+
+            await ctx.send(
+                "Join VC first"
+            )
+
+    except Exception as e:
+
+        await ctx.send(
+
+            "❌ Voice system "
+            "not supported on host"
+
+        )
+
+        print(e)
 
 
 # Leave VC

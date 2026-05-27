@@ -2630,6 +2630,76 @@ async def help(ctx):
 """
 
     await ctx.send(help_text)
+@commands.check(is_staff)
+@bot.command()
+async def verifyuser(
+    ctx,
+    member: discord.Member
+):
+
+    role = discord.utils.get(
+
+        ctx.guild.roles,
+
+        name="Verified"
+    )
+
+    if not role:
+
+        await ctx.send(
+
+            "❌ Verified role "
+            "not found"
+
+        )
+
+        return
+
+    if role in member.roles:
+
+        await ctx.send(
+
+            f"{member.mention} "
+            f"is already verified"
+
+        )
+
+        return
+
+    try:
+
+        await member.add_roles(
+            role
+        )
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"verified successfully"
+
+        )
+
+        await send_mod_log(
+
+            ctx.guild,
+
+            f"✅ "
+            f"{ctx.author} "
+            f"manually verified "
+            f"{member}"
+
+        )
+
+    except Exception as e:
+
+        await ctx.send(
+
+            "❌ Verification failed"
+
+        )
+
+        print(e)
 
 while True:
 

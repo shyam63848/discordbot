@@ -2372,46 +2372,53 @@ async def on_ready():
 
     load_warnings()
     load_settings()
-        bot.loop.create_task(
+
+    if not cleanup_memory.is_running():
+        cleanup_memory.start()
+
+    bot.loop.create_task(
         voice_watchdog()
     )
-    
+
     try:
-    
+
         with open(
             "voice_channel.json",
             "r"
         ) as f:
-    
+
             data = json.load(f)
-    
+
         channel_id = data.get(
             "channel_id"
         )
-    
+
         if channel_id:
-    
+
             channel = bot.get_channel(
                 channel_id
             )
-    
+
             if channel:
-    
+
                 await channel.connect()
-    
+
                 print(
                     "Rejoined VC"
                 )
-    
+
     except Exception as e:
-    
+
         print(
             "VC reconnect error:",
             e
         )
+
     if not health_monitor.is_running():
         health_monitor.start()
+    if not cleanup_memory.is_running():
 
+        cleanup_memory.start()
 
     print(
         f"✅ Logged in as "

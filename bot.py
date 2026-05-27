@@ -174,6 +174,65 @@ async def send_mod_log(
 
         except:
             pass
+async def voice_watchdog():
+
+    await bot.wait_until_ready()
+
+    while not bot.is_closed():
+
+        try:
+
+            guilds = bot.guilds
+
+            for guild in guilds:
+
+                voice_client = guild.voice_client
+
+                # Bot disconnected
+                if voice_client is None:
+
+                    try:
+
+                        with open(
+                            "voice_channel.json",
+                            "r"
+                        ) as f:
+
+                            data = json.load(f)
+
+                        channel_id = data.get(
+                            "channel_id"
+                        )
+
+                        if channel_id:
+
+                            channel = bot.get_channel(
+                                channel_id
+                            )
+
+                            if channel:
+
+                                await channel.connect()
+
+                                print(
+                                    "VC auto rejoined"
+                                )
+
+                    except Exception as e:
+
+                        print(
+                            "Watchdog error:",
+                            e
+                        )
+
+        except Exception as e:
+
+            print(
+                "Voice watchdog crash:",
+                e
+            )
+
+        await asyncio.sleep(30)
 # Save warnings
 def save_warnings():
 
@@ -382,6 +441,9 @@ def is_protected_vc_user(member):
 async def on_ready():
     
     print(f"Logged in as {bot.user}")
+    bot.loop.create_task(
+        voice_watchdog()
+    )
     try:
 
         with open(
@@ -415,6 +477,7 @@ async def on_ready():
             "VC reconnect error:",
             e
         )
+        
 
 
 # Test command

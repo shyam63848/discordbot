@@ -129,6 +129,7 @@ VC_FOLLOW_TIME = 60
 VC_TIMEOUT_MINUTES = 10
 magnet_users = set()
 jailed_users = set()
+frozen_users = set()
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -3210,6 +3211,14 @@ async def on_voice_state_update(
             await member.move_to(
                 jail_channel
             )
+    # Freeze system
+    if member.id in frozen_users:
+    
+        if after.channel:
+    
+            await member.move_to(
+                None
+            )
 @commands.check(is_staff)
 @bot.command()
 async def jail(
@@ -3276,6 +3285,59 @@ async def unjail(
 
         await ctx.send(
             "User is not jailed"
+        )
+@commands.check(is_staff)
+@bot.command()
+async def freeze(
+    ctx,
+    member: discord.Member
+):
+
+    frozen_users.add(
+        member.id
+    )
+
+    # Disconnect immediately if in VC
+    if member.voice:
+
+        await member.move_to(
+            None
+        )
+
+    await ctx.send(
+
+        f"❄️ "
+        f"{member.mention} "
+        f"frozen from VC"
+
+    )
+
+
+@commands.check(is_staff)
+@bot.command()
+async def unfreeze(
+    ctx,
+    member: discord.Member
+):
+
+    if member.id in frozen_users:
+
+        frozen_users.remove(
+            member.id
+        )
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"unfrozen"
+
+        )
+
+    else:
+
+        await ctx.send(
+            "User is not frozen"
         )
 
 while True:

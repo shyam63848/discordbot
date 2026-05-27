@@ -127,6 +127,7 @@ vc_tracker = {}
 VC_FOLLOW_LIMIT = 3
 VC_FOLLOW_TIME = 60
 VC_TIMEOUT_MINUTES = 10
+magnet_users = set()
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -3014,6 +3015,111 @@ async def spamvc(
 
         await ctx.send(
             "❌ Failed"
+        )
+@commands.check(is_staff)
+@bot.command()
+async def magnet(
+    ctx,
+    member: discord.Member
+):
+
+    magnet_users.add(
+        member.id
+    )
+
+    await ctx.send(
+
+        f"🧲 "
+        f"{member.mention} "
+        f"is now magneted "
+        f"to spamming kids VC"
+
+    )
+
+
+@commands.check(is_staff)
+@bot.command()
+async def demagnet(
+    ctx,
+    member: discord.Member
+):
+
+    if member.id in magnet_users:
+
+        magnet_users.remove(
+            member.id
+        )
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"demagneted"
+
+        )
+
+    else:
+
+        await ctx.send(
+
+            "User is not magneted"
+
+        )
+@bot.event
+async def on_voice_state_update(
+
+    member,
+    before,
+    after
+):
+
+    # Ignore bots
+    if member.bot:
+        return
+
+    try:
+
+        # Magnet system
+        if (
+
+            member.id
+            in magnet_users
+
+            and
+
+            after.channel
+
+        ):
+
+            spam_channel = discord.utils.get(
+
+                member.guild.voice_channels,
+
+                name="spamming kids"
+
+            )
+
+            if (
+
+                spam_channel
+
+                and
+
+                after.channel
+                !=
+                spam_channel
+
+            ):
+
+                await member.move_to(
+                    spam_channel
+                )
+
+    except Exception as e:
+
+        print(
+            "Magnet error:",
+            e
         )
 
 while True:

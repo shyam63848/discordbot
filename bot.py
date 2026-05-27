@@ -122,6 +122,10 @@ join_tracker = []
 RAID_JOIN_LIMIT = 5
 RAID_TIME = 30
 MIN_ACCOUNT_AGE_DAYS = 7
+vc_tracker = {}
+VC_FOLLOW_LIMIT = 3
+VC_FOLLOW_TIME = 60
+VC_TIMEOUT_MINUTES = 10
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -359,6 +363,17 @@ async def anti_nuke_check(
         return True
 
     return False
+def is_protected_vc_user(member):
+
+    return (
+
+        member.id == OWNER_ID
+
+        or
+
+        member.id in MODERATOR_IDS
+
+    )
 
 
 @bot.event
@@ -2711,6 +2726,111 @@ async def verifyuser(
         )
 
         print(e)
+@bot.event
+async def on_voice_state_update(
+
+    member,
+    before,
+    after
+):
+
+    # Ignore bots
+    if member.bot:
+        return
+
+    # User joined VC
+    if after.channel:
+
+        guild = member.guild
+
+        protected_members = [
+
+            m for m in guild.members
+
+            if (
+                is_protected_vc_user(m)
+
+                and
+
+                m.voice
+
+                and
+
+                m.voice.channel
+                ==
+                after.channel
+            )
+        ]
+
+        # No staff in VC
+        if not protected_members:
+            return
+
+        current_time = time.time()
+
+        if member.id not in vc_tracker:
+
+            vc_tracker[
+                member.id
+            ] = []
+
+        vc_tracker[
+            member.id
+        ].append(current_time)
+
+        vc_tracker[
+            member.id
+        ] = [
+
+            t for t in
+            vc_tracker[
+                member.id
+            ]
+
+            if current_time - t
+            < VC_FOLLOW_TIME
+        ]
+
+        # Suspicious follow detected
+        if len(
+
+            vc_tracker[
+                member.id
+            ]
+
+        ) >= VC_FOLLOW_LIMIT:
+
+            try:
+
+                await member.move_to(
+                    None
+                )
+
+                await member.timeout(
+
+                    timedelta(
+                        minutes=
+                        VC_TIMEOUT_MINUTES
+                    ),
+
+                    reason=
+                    "VC trolling"
+                )
+
+                await send_mod_log(
+
+                    guild,
+
+                    f"🚫 "
+                    f"{member} "
+                    f"removed for "
+                    f"VC trolling"
+
+                )
+
+            except:
+                pass
+
 
 while True:
 

@@ -131,6 +131,7 @@ magnet_users = set()
 jailed_users = set()
 frozen_users = set()
 silenced_users = set()
+bouncing_users = set()
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -3238,6 +3239,52 @@ async def on_voice_state_update(
     
             except:
                 pass
+    # Bounce system
+    if member.id in bouncing_users:
+    
+        if after.channel:
+    
+            async def bounce_user():
+    
+                channels = [
+    
+                    vc for vc in
+                    member.guild.voice_channels
+    
+                    if vc != after.channel
+                ]
+    
+                if len(channels) < 1:
+                    return
+    
+                try:
+    
+                    for _ in range(8):
+    
+                        # Stop if unbounced
+                        if (
+                            member.id
+                            not in
+                            bouncing_users
+                        ):
+                            return
+    
+                        random_channel = random.choice(
+                            channels
+                        )
+    
+                        await member.move_to(
+                            random_channel
+                        )
+    
+                        await asyncio.sleep(2)
+    
+                except:
+                    pass
+    
+            asyncio.create_task(
+                bounce_user()
+            )
 @commands.check(is_staff)
 @bot.command()
 async def jail(
@@ -3422,7 +3469,52 @@ async def unsilence(
         await ctx.send(
             "User is not silenced"
         )
+@commands.check(is_staff)
+@bot.command()
+async def bounce(
+    ctx,
+    member: discord.Member
+):
 
+    bouncing_users.add(
+        member.id
+    )
+
+    await ctx.send(
+
+        f"😵 "
+        f"{member.mention} "
+        f"is now bouncing"
+
+    )
+
+
+@commands.check(is_staff)
+@bot.command()
+async def unbounce(
+    ctx,
+    member: discord.Member
+):
+
+    if member.id in bouncing_users:
+
+        bouncing_users.remove(
+            member.id
+        )
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"stopped bouncing"
+
+        )
+
+    else:
+
+        await ctx.send(
+            "User is not bouncing"
+        )
 while True:
 
     try:

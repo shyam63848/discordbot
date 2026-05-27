@@ -1026,8 +1026,12 @@ async def on_message(message):
                 pass
 
             warning = await message.channel.send(
-                f"⚠️ {message.author.mention} spam detected. Messages removed and timed out for 5 minutes."
-        )
+
+                f"⚠️ "
+                f"{message.author.mention} "
+                f"NEE AMMA PUKULU SPAMMING"
+
+            )
 
             await asyncio.sleep(5)
 

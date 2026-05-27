@@ -3169,92 +3169,93 @@ async def on_voice_state_update(
 
 
 # VC follow protection
-if after.channel:
+    # VC follow protection
+    if after.channel:
 
-    guild = member.guild
+        guild = member.guild
 
-    protected_members = [
+        protected_members = [
 
-        m for m in guild.members
+            m for m in guild.members
 
-        if (
-            is_protected_vc_user(m)
+            if (
+                is_protected_vc_user(m)
 
-            and
-            m.voice
+                and
+                m.voice
 
-            and
-            m.voice.channel
-            ==
-            after.channel
-        )
-    ]
-
-    if protected_members:
-
-        current_time = time.time()
-
-        if member.id not in vc_tracker:
-
-            vc_tracker[
-                member.id
-            ] = []
-
-        vc_tracker[
-            member.id
-        ].append(current_time)
-
-        vc_tracker[
-            member.id
-        ] = [
-
-            t for t in
-            vc_tracker[
-                member.id
-            ]
-
-            if current_time - t
-            < VC_FOLLOW_TIME
+                and
+                m.voice.channel
+                ==
+                after.channel
+            )
         ]
 
-        if len(
+        if protected_members:
+
+            current_time = time.time()
+
+            if member.id not in vc_tracker:
+
+                vc_tracker[
+                    member.id
+                ] = []
 
             vc_tracker[
                 member.id
+            ].append(current_time)
+
+            vc_tracker[
+                member.id
+            ] = [
+
+                t for t in
+                vc_tracker[
+                    member.id
+                ]
+
+                if current_time - t
+                < VC_FOLLOW_TIME
             ]
 
-        ) >= VC_FOLLOW_LIMIT:
+            if len(
 
-            try:
+                vc_tracker[
+                    member.id
+                ]
 
-                await member.move_to(
-                    None
-                )
+            ) >= VC_FOLLOW_LIMIT:
 
-                await member.timeout(
+                try:
 
-                    timedelta(
-                        minutes=
-                        VC_TIMEOUT_MINUTES
-                    ),
+                    await member.move_to(
+                        None
+                    )
 
-                    reason=
-                    "VC trolling"
-                )
+                    await member.timeout(
 
-                await send_mod_log(
+                        timedelta(
+                            minutes=
+                            VC_TIMEOUT_MINUTES
+                        ),
 
-                    guild,
+                        reason=
+                        "VC trolling"
+                    )
 
-                    f"🚫 "
-                    f"{member} "
-                    f"removed for "
-                    f"VC trolling"
+                    await send_mod_log(
 
-                )
+                        guild,
 
-            except:
-                pass
+                        f"🚫 "
+                        f"{member} "
+                        f"removed for "
+                        f"VC trolling"
+
+                    )
+
+                except:
+                    pass
 
     try:
 
@@ -3300,96 +3301,98 @@ if after.channel:
             "Magnet error:",
             e
         )
+
     # Jail system
     if member.id in jailed_users:
-    
+
         jail_channel = discord.utils.get(
-    
+
             member.guild.voice_channels,
-    
+
             name="jail"
         )
-    
+
         if (
-    
+
             jail_channel
-    
+
             and
-    
+
             after.channel
             !=
             jail_channel
-    
+
         ):
-    
+
             await member.move_to(
                 jail_channel
             )
+
     # Freeze system
     if member.id in frozen_users:
-    
+
         if after.channel:
-    
+
             await member.move_to(
                 None
             )
+
     # Silence system
     if member.id in silenced_users:
-    
-        # User joined or unmuted
+
         if after.channel:
-    
+
             try:
-    
+
                 await member.edit(
                     mute=True
                 )
-    
+
             except:
                 pass
+
     # Bounce system
     if member.id in bouncing_users:
-    
+
         if after.channel:
-    
+
             async def bounce_user():
-    
+
                 channels = [
-    
+
                     vc for vc in
                     member.guild.voice_channels
-    
+
                     if vc != after.channel
                 ]
-    
+
                 if len(channels) < 1:
                     return
-    
+
                 try:
-    
+
                     for _ in range(8):
-    
-                        # Stop if unbounced
+
                         if (
                             member.id
                             not in
                             bouncing_users
                         ):
                             return
-    
+
                         random_channel = random.choice(
                             channels
                         )
-    
+
                         await member.move_to(
                             random_channel
                         )
-    
+
                         await asyncio.sleep(2)
-    
+
                 except:
                     pass
-    
+
             asyncio.create_task(
                 bounce_user()
             )

@@ -2944,6 +2944,77 @@ async def on_voice_state_update(
             "VC tracking error:",
             e
         )
+@commands.check(is_staff)
+@bot.command()
+async def spamvc(
+    ctx,
+    member: discord.Member
+):
+
+    try:
+
+        channel = discord.utils.get(
+
+            ctx.guild.voice_channels,
+
+            name="spamming kids"
+        )
+
+        if not channel:
+
+            await ctx.send(
+
+                "❌ "
+                "spamming kids VC "
+                "not found"
+
+            )
+
+            return
+
+        if not member.voice:
+
+            await ctx.send(
+
+                "❌ User "
+                "not in VC"
+
+            )
+
+            return
+
+        await member.move_to(
+            channel
+        )
+
+        await ctx.send(
+
+            f"😄 "
+            f"{member.mention} "
+            f"moved to "
+            f"spamming kids"
+
+        )
+
+        await send_mod_log(
+
+            ctx.guild,
+
+            f"🎤 "
+            f"{ctx.author} "
+            f"moved "
+            f"{member} "
+            f"to spamming kids VC"
+
+        )
+
+    except Exception as e:
+
+        print(e)
+
+        await ctx.send(
+            "❌ Failed"
+        )
 
 while True:
 

@@ -46,6 +46,17 @@ def is_mod(ctx):
         in MODERATOR_IDS
 
     )
+def is_staff(ctx):
+
+    return (
+
+        is_owner(ctx)
+
+        or
+
+        is_mod(ctx)
+
+    )
 def is_staff_member(member):
 
     return (

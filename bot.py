@@ -444,6 +444,22 @@ async def join(ctx):
 
                 await channel.connect()
 
+            with open(
+                "voice_channel.json",
+                "w"
+            ) as f:
+
+                json.dump(
+
+                    {
+                        "channel_id":
+                        channel.id
+                    },
+
+                    f
+
+                )
+
             await ctx.send(
                 "Joined VC"
             )
@@ -457,15 +473,10 @@ async def join(ctx):
     except Exception as e:
 
         await ctx.send(
-
-            "❌ Voice system "
-            "not supported on host"
-
+            "❌ Voice error"
         )
 
         print(e)
-
-
 # Leave VC
 @commands.check(is_owner)
 @bot.command()

@@ -3144,14 +3144,14 @@ async def on_voice_state_update(
 
                     await channel.connect()
 
-    except Exception as e:
+        except Exception as e:
 
-        print(
-            "VC tracking error:",
-            e
-        )
+            print(
+                "VC tracking error:",
+                e
+            )
 
-    return
+        return
 
 
 # VC follow protection

@@ -2751,6 +2751,21 @@ async def help(ctx):
 !health → bot health status
 
 
+🎤 VC CONTROL COMMANDS
+
+!spamvc @user → move user to spamming kids VC
+!magnet @user → force user into spamming kids VC
+!demagnet @user → remove magnet punishment
+!jail @user → trap user in jail VC
+!unjail @user → release from jail
+!freeze @user → block VC access
+!unfreeze @user → allow VC access
+!silence @user → force mute in VC
+!unsilence @user → remove mute
+!bounce @user → random VC teleport 😄
+!unbounce @user → stop bouncing
+
+
 🎵 MUSIC / VOICE COMMANDS
 
 !join → join voice channel

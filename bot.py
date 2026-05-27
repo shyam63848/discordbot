@@ -178,6 +178,121 @@ async def send_mod_log(
 
         except:
             pass
+@tasks.loop(minutes=10)
+async def cleanup_memory():
+
+    current_time = time.time()
+
+    # Clean spam tracker
+    for user_id in list(
+        message_tracker.keys()
+    ):
+
+        if isinstance(
+            message_tracker[user_id],
+            list
+        ):
+
+            message_tracker[
+                user_id
+            ] = [
+
+                t for t in
+                message_tracker[
+                    user_id
+                ]
+
+                if isinstance(
+                    t,
+                    (int, float)
+                )
+
+                and
+
+                current_time - t
+                < SPAM_TIME
+
+            ]
+
+            if not message_tracker[
+                user_id
+            ]:
+
+                del message_tracker[
+                    user_id
+                ]
+
+
+    # Clean VC tracker
+    for user_id in list(
+        vc_tracker.keys()
+    ):
+
+        vc_tracker[
+            user_id
+        ] = [
+
+            t for t in
+            vc_tracker[
+                user_id
+            ]
+
+            if current_time - t
+            < VC_FOLLOW_TIME
+
+        ]
+
+        if not vc_tracker[
+            user_id
+        ]:
+
+            del vc_tracker[
+                user_id
+            ]
+
+
+    # Clean anti-nuke tracker
+    for user_id in list(
+        anti_nuke_tracker.keys()
+    ):
+
+        anti_nuke_tracker[
+            user_id
+        ] = [
+
+            t for t in
+            anti_nuke_tracker[
+                user_id
+            ]
+
+            if current_time - t
+            < ANTI_NUKE_TIME
+
+        ]
+
+        if not anti_nuke_tracker[
+            user_id
+        ]:
+
+            del anti_nuke_tracker[
+                user_id
+            ]
+
+
+    # Clean chat tracker
+    chat_tracker[:] = [
+
+        t for t in
+        chat_tracker
+
+        if current_time - t
+        < CHAT_SPAM_TIME
+
+    ]
+
+    print(
+        "🧹 Memory cleanup complete"
+    )
 async def voice_watchdog():
 
     await bot.wait_until_ready()
@@ -444,50 +559,6 @@ def is_protected_vc_user(member):
 
     )
 
-
-@bot.event
-async def on_ready():
-    
-    print(f"Logged in as {bot.user}")
-    bot.loop.create_task(
-        voice_watchdog()
-    )
-    try:
-
-        with open(
-            "voice_channel.json",
-            "r"
-        ) as f:
-
-            data = json.load(f)
-
-        channel_id = data.get(
-            "channel_id"
-        )
-
-        if channel_id:
-
-            channel = bot.get_channel(
-                channel_id
-            )
-
-            if channel:
-
-                await channel.connect()
-
-                print(
-                    "Rejoined VC"
-                )
-
-    except Exception as e:
-
-        print(
-            "VC reconnect error:",
-            e
-        )
-        
-
-
 # Test command
 @bot.command()
 async def hello(ctx):
@@ -717,8 +788,6 @@ async def dmid(ctx, userid: int, *, message):
         await ctx.send(
             "Failed to send DM"
         )
-def is_owner(ctx):
-    return ctx.author.id == OWNER_ID
 # Lock channel
 @commands.check(is_owner)
 @bot.command()
@@ -1601,20 +1670,6 @@ async def send_log(ctx, message):
             await log_channel.send(message)
         except:
             pass
-async def send_log(ctx, message):
-
-    log_channel = discord.utils.get(
-        ctx.guild.text_channels,
-        name=LOG_CHANNEL
-    )
-
-    if log_channel:
-
-        try:
-            await log_channel.send(message)
-
-        except:
-            pass
 @bot.event
 async def on_command(ctx):
 
@@ -2317,6 +2372,43 @@ async def on_ready():
 
     load_warnings()
     load_settings()
+        bot.loop.create_task(
+        voice_watchdog()
+    )
+    
+    try:
+    
+        with open(
+            "voice_channel.json",
+            "r"
+        ) as f:
+    
+            data = json.load(f)
+    
+        channel_id = data.get(
+            "channel_id"
+        )
+    
+        if channel_id:
+    
+            channel = bot.get_channel(
+                channel_id
+            )
+    
+            if channel:
+    
+                await channel.connect()
+    
+                print(
+                    "Rejoined VC"
+                )
+    
+    except Exception as e:
+    
+        print(
+            "VC reconnect error:",
+            e
+        )
     if not health_monitor.is_running():
         health_monitor.start()
 
@@ -2862,175 +2954,7 @@ async def verifyuser(
         )
 
         print(e)
-@bot.event
-async def on_voice_state_update(
 
-    member,
-    before,
-    after
-):
-
-    # Ignore bots
-    if member.bot:
-        return
-
-    # User joined VC
-    if after.channel:
-
-        guild = member.guild
-
-        protected_members = [
-
-            m for m in guild.members
-
-            if (
-                is_protected_vc_user(m)
-
-                and
-
-                m.voice
-
-                and
-
-                m.voice.channel
-                ==
-                after.channel
-            )
-        ]
-
-        # No staff in VC
-        if not protected_members:
-            return
-
-        current_time = time.time()
-
-        if member.id not in vc_tracker:
-
-            vc_tracker[
-                member.id
-            ] = []
-
-        vc_tracker[
-            member.id
-        ].append(current_time)
-
-        vc_tracker[
-            member.id
-        ] = [
-
-            t for t in
-            vc_tracker[
-                member.id
-            ]
-
-            if current_time - t
-            < VC_FOLLOW_TIME
-        ]
-
-        # Suspicious follow detected
-        if len(
-
-            vc_tracker[
-                member.id
-            ]
-
-        ) >= VC_FOLLOW_LIMIT:
-
-            try:
-
-                await member.move_to(
-                    None
-                )
-
-                await member.timeout(
-
-                    timedelta(
-                        minutes=
-                        VC_TIMEOUT_MINUTES
-                    ),
-
-                    reason=
-                    "VC trolling"
-                )
-
-                await send_mod_log(
-
-                    guild,
-
-                    f"🚫 "
-                    f"{member} "
-                    f"removed for "
-                    f"VC trolling"
-
-                )
-
-            except:
-                pass
-@bot.event
-async def on_voice_state_update(
-
-    member,
-    before,
-    after
-):
-
-    # Ignore if not bot
-    if member != bot.user:
-        return
-
-    try:
-
-        # Bot moved to another VC
-        if after.channel:
-
-            with open(
-                "voice_channel.json",
-                "w"
-            ) as f:
-
-                json.dump(
-
-                    {
-                        "channel_id":
-                        after.channel.id
-                    },
-
-                    f
-
-                )
-
-        # Bot disconnected
-        elif before.channel:
-
-            await asyncio.sleep(5)
-
-            with open(
-                "voice_channel.json",
-                "r"
-            ) as f:
-
-                data = json.load(f)
-
-            channel_id = data.get(
-                "channel_id"
-            )
-
-            if channel_id:
-
-                channel = bot.get_channel(
-                    channel_id
-                )
-
-                if channel:
-
-                    await channel.connect()
-
-    except Exception as e:
-
-        print(
-            "VC tracking error:",
-            e
-        )
 @commands.check(is_staff)
 @bot.command()
 async def spamvc(
@@ -3162,6 +3086,153 @@ async def on_voice_state_update(
     # Ignore bots
     if member.bot:
         return
+# Bot VC tracking
+if member == bot.user:
+
+    try:
+
+        # Bot moved to VC
+        if after.channel:
+
+            with open(
+                "voice_channel.json",
+                "w"
+            ) as f:
+
+                json.dump(
+
+                    {
+                        "channel_id":
+                        after.channel.id
+                    },
+
+                    f
+
+                )
+
+        # Bot disconnected
+        elif before.channel:
+
+            await asyncio.sleep(5)
+
+            with open(
+                "voice_channel.json",
+                "r"
+            ) as f:
+
+                data = json.load(f)
+
+            channel_id = data.get(
+                "channel_id"
+            )
+
+            if channel_id:
+
+                channel = bot.get_channel(
+                    channel_id
+                )
+
+                if channel:
+
+                    await channel.connect()
+
+    except Exception as e:
+
+        print(
+            "VC tracking error:",
+            e
+        )
+
+    return
+
+
+# VC follow protection
+if after.channel:
+
+    guild = member.guild
+
+    protected_members = [
+
+        m for m in guild.members
+
+        if (
+            is_protected_vc_user(m)
+
+            and
+            m.voice
+
+            and
+            m.voice.channel
+            ==
+            after.channel
+        )
+    ]
+
+    if protected_members:
+
+        current_time = time.time()
+
+        if member.id not in vc_tracker:
+
+            vc_tracker[
+                member.id
+            ] = []
+
+        vc_tracker[
+            member.id
+        ].append(current_time)
+
+        vc_tracker[
+            member.id
+        ] = [
+
+            t for t in
+            vc_tracker[
+                member.id
+            ]
+
+            if current_time - t
+            < VC_FOLLOW_TIME
+        ]
+
+        if len(
+
+            vc_tracker[
+                member.id
+            ]
+
+        ) >= VC_FOLLOW_LIMIT:
+
+            try:
+
+                await member.move_to(
+                    None
+                )
+
+                await member.timeout(
+
+                    timedelta(
+                        minutes=
+                        VC_TIMEOUT_MINUTES
+                    ),
+
+                    reason=
+                    "VC trolling"
+                )
+
+                await send_mod_log(
+
+                    guild,
+
+                    f"🚫 "
+                    f"{member} "
+                    f"removed for "
+                    f"VC trolling"
+
+                )
+
+            except:
+                pass
 
     try:
 

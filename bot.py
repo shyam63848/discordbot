@@ -549,6 +549,8 @@ async def anti_nuke_check(
     return False
 def is_protected_vc_user(member):
 
+    MUSIC_BOT_ID = 1508778690534969435
+
     return (
 
         member.id == OWNER_ID
@@ -557,6 +559,13 @@ def is_protected_vc_user(member):
 
         member.id in MODERATOR_IDS
 
+        or
+
+        member.id == MUSIC_BOT_ID
+
+        or
+
+        member.bot
     )
 
 # Test command

@@ -215,7 +215,11 @@ async def voice_watchdog():
 
                             if channel:
 
-                                await channel.connect()
+                                if not guild.voice_client:
+
+                                    await channel.connect(
+                                        reconnect=True
+                                )
 
                                 print(
                                     "VC auto rejoined"

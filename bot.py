@@ -3098,13 +3098,13 @@ async def on_voice_state_update(
     before,
     after
 ):
-
-    # Ignore bots
-    if member.bot:
-        return
-
+    
     # Bot VC tracking
     if member == bot.user:
+        return
+        
+    if member.bot:
+        return
 
         try:
 

@@ -130,6 +130,7 @@ VC_TIMEOUT_MINUTES = 10
 magnet_users = set()
 jailed_users = set()
 frozen_users = set()
+silenced_users = set()
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -3219,6 +3220,20 @@ async def on_voice_state_update(
             await member.move_to(
                 None
             )
+    # Silence system
+    if member.id in silenced_users:
+    
+        # User joined or unmuted
+        if after.channel:
+    
+            try:
+    
+                await member.edit(
+                    mute=True
+                )
+    
+            except:
+                pass
 @commands.check(is_staff)
 @bot.command()
 async def jail(
@@ -3338,6 +3353,70 @@ async def unfreeze(
 
         await ctx.send(
             "User is not frozen"
+        )
+@commands.check(is_staff)
+@bot.command()
+async def silence(
+    ctx,
+    member: discord.Member
+):
+
+    silenced_users.add(
+        member.id
+    )
+
+    try:
+
+        await member.edit(
+            mute=True
+        )
+
+    except:
+        pass
+
+    await ctx.send(
+
+        f"🔇 "
+        f"{member.mention} "
+        f"silenced"
+
+    )
+
+
+@commands.check(is_staff)
+@bot.command()
+async def unsilence(
+    ctx,
+    member: discord.Member
+):
+
+    if member.id in silenced_users:
+
+        silenced_users.remove(
+            member.id
+        )
+
+        try:
+
+            await member.edit(
+                mute=False
+            )
+
+        except:
+            pass
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"unsilenced"
+
+        )
+
+    else:
+
+        await ctx.send(
+            "User is not silenced"
         )
 
 while True:

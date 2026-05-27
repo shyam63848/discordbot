@@ -2879,7 +2879,71 @@ async def on_voice_state_update(
 
             except:
                 pass
+@bot.event
+async def on_voice_state_update(
 
+    member,
+    before,
+    after
+):
+
+    # Ignore if not bot
+    if member != bot.user:
+        return
+
+    try:
+
+        # Bot moved to another VC
+        if after.channel:
+
+            with open(
+                "voice_channel.json",
+                "w"
+            ) as f:
+
+                json.dump(
+
+                    {
+                        "channel_id":
+                        after.channel.id
+                    },
+
+                    f
+
+                )
+
+        # Bot disconnected
+        elif before.channel:
+
+            await asyncio.sleep(5)
+
+            with open(
+                "voice_channel.json",
+                "r"
+            ) as f:
+
+                data = json.load(f)
+
+            channel_id = data.get(
+                "channel_id"
+            )
+
+            if channel_id:
+
+                channel = bot.get_channel(
+                    channel_id
+                )
+
+                if channel:
+
+                    await channel.connect()
+
+    except Exception as e:
+
+        print(
+            "VC tracking error:",
+            e
+        )
 
 while True:
 

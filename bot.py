@@ -1,4 +1,5 @@
 import discord
+import nacl
 import json
 from discord import PCMVolumeTransformer
 from discord.ext import commands

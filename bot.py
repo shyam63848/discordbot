@@ -381,6 +381,39 @@ def is_protected_vc_user(member):
 async def on_ready():
     
     print(f"Logged in as {bot.user}")
+    try:
+
+        with open(
+            "voice_channel.json",
+            "r"
+        ) as f:
+
+            data = json.load(f)
+
+        channel_id = data.get(
+            "channel_id"
+        )
+
+        if channel_id:
+
+            channel = bot.get_channel(
+                channel_id
+            )
+
+            if channel:
+
+                await channel.connect()
+
+                print(
+                    "Rejoined VC"
+                )
+
+    except Exception as e:
+
+        print(
+            "VC reconnect error:",
+            e
+        )
 
 
 # Test command

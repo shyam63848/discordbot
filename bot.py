@@ -3120,15 +3120,29 @@ async def on_voice_state_update(
 
             # Bot disconnected
             elif before.channel:
-
+            
                 await asyncio.sleep(5)
-
-            with open(
-                "voice_channel.json",
-                "r"
-            ) as f:
-
-                data = json.load(f)
+            
+                with open(
+                    "voice_channel.json",
+                    "r"
+                ) as f:
+            
+                    data = json.load(f)
+            
+                channel_id = data.get(
+                    "channel_id"
+                )
+            
+                if channel_id:
+            
+                    channel = bot.get_channel(
+                        channel_id
+                    )
+            
+                    if channel:
+            
+                        await channel.connect()
 
             channel_id = data.get(
                 "channel_id"

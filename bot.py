@@ -128,6 +128,7 @@ VC_FOLLOW_LIMIT = 3
 VC_FOLLOW_TIME = 60
 VC_TIMEOUT_MINUTES = 10
 magnet_users = set()
+jailed_users = set()
 MODERATOR_IDS = [
 
     1277332965629624411,
@@ -3183,6 +3184,98 @@ async def on_voice_state_update(
         print(
             "Magnet error:",
             e
+        )
+    # Jail system
+    if member.id in jailed_users:
+    
+        jail_channel = discord.utils.get(
+    
+            member.guild.voice_channels,
+    
+            name="jail"
+        )
+    
+        if (
+    
+            jail_channel
+    
+            and
+    
+            after.channel
+            !=
+            jail_channel
+    
+        ):
+    
+            await member.move_to(
+                jail_channel
+            )
+@commands.check(is_staff)
+@bot.command()
+async def jail(
+    ctx,
+    member: discord.Member
+):
+
+    jailed_users.add(
+        member.id
+    )
+
+    jail_channel = discord.utils.get(
+
+        ctx.guild.voice_channels,
+
+        name="jail"
+    )
+
+    if not jail_channel:
+
+        await ctx.send(
+            "❌ jail VC not found"
+        )
+
+        return
+
+    if member.voice:
+
+        await member.move_to(
+            jail_channel
+        )
+
+    await ctx.send(
+
+        f"🔒 "
+        f"{member.mention} "
+        f"jailed"
+
+    )
+
+
+@commands.check(is_staff)
+@bot.command()
+async def unjail(
+    ctx,
+    member: discord.Member
+):
+
+    if member.id in jailed_users:
+
+        jailed_users.remove(
+            member.id
+        )
+
+        await ctx.send(
+
+            f"✅ "
+            f"{member.mention} "
+            f"released from jail"
+
+        )
+
+    else:
+
+        await ctx.send(
+            "User is not jailed"
         )
 
 while True:

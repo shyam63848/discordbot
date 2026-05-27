@@ -3093,34 +3093,35 @@ async def on_voice_state_update(
     # Ignore bots
     if member.bot:
         return
-# Bot VC tracking
-if member == bot.user:
 
-    try:
+    # Bot VC tracking
+    if member == bot.user:
 
-        # Bot moved to VC
-        if after.channel:
+        try:
 
-            with open(
-                "voice_channel.json",
-                "w"
-            ) as f:
+            # Bot moved to VC
+            if after.channel:
 
-                json.dump(
+                with open(
+                    "voice_channel.json",
+                    "w"
+                ) as f:
 
-                    {
-                        "channel_id":
-                        after.channel.id
-                    },
+                    json.dump(
 
-                    f
+                        {
+                            "channel_id":
+                            after.channel.id
+                        },
 
-                )
+                        f
 
-        # Bot disconnected
-        elif before.channel:
+                    )
 
-            await asyncio.sleep(5)
+            # Bot disconnected
+            elif before.channel:
+
+                await asyncio.sleep(5)
 
             with open(
                 "voice_channel.json",

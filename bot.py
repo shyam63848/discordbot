@@ -293,69 +293,7 @@ async def cleanup_memory():
     print(
         "🧹 Memory cleanup complete"
     )
-async def voice_watchdog():
 
-    await bot.wait_until_ready()
-
-    while not bot.is_closed():
-
-        try:
-
-            guilds = bot.guilds
-
-            for guild in guilds:
-
-                voice_client = guild.voice_client
-
-                # Bot disconnected
-                if voice_client is None:
-
-                    try:
-
-                        with open(
-                            "voice_channel.json",
-                            "r"
-                        ) as f:
-
-                            data = json.load(f)
-
-                        channel_id = data.get(
-                            "channel_id"
-                        )
-
-                        if channel_id:
-
-                            channel = bot.get_channel(
-                                channel_id
-                            )
-
-                            if channel:
-
-                                if not guild.voice_client:
-
-                                    await channel.connect(
-                                        reconnect=True
-                                )
-
-                                print(
-                                    "VC auto rejoined"
-                                )
-
-                    except Exception as e:
-
-                        print(
-                            "Watchdog error:",
-                            e
-                        )
-
-        except Exception as e:
-
-            print(
-                "Voice watchdog crash:",
-                e
-            )
-
-        await asyncio.sleep(30)
 # Save warnings
 def save_warnings():
 
@@ -956,6 +894,9 @@ async def on_message(message):
     
         except:
             pass
+        await bot.process_commands(
+            message
+        )
     
         return
     
@@ -1729,12 +1670,6 @@ async def kick(ctx, member: discord.Member, *, reason="No reason"):
 
         return
 
-        await ctx.send(
-            "❌ You cannot kick the owner"
-        )
-
-    return
-
     try:
 
         await member.kick(
@@ -1776,12 +1711,6 @@ async def ban(ctx, member: discord.Member, *, reason="No reason"):
 
         return
 
-        await ctx.send(
-            "❌ You cannot ban the owner"
-        )
-
-        return
-
     try:
 
         await member.ban(
@@ -1813,6 +1742,7 @@ async def timeout(
     member: discord.Member,
     minutes: int
 ):
+
     if (
         is_protected(member)
 
@@ -1827,9 +1757,19 @@ async def timeout(
 
         return
 
-        await ctx.send(
-            "❌ You cannot timeout the owner"
+    try:
+
+        await member.timeout(
+            timedelta(minutes=minutes),
+            reason="Admin timeout"
         )
+
+        await ctx.send(
+            f"⏳ {member.name} "
+            f"timed out for "
+            f"{minutes} minute(s)"
+        )
+
         await send_mod_log(
 
             ctx.guild,
@@ -1841,19 +1781,9 @@ async def timeout(
 
         )
 
-        return
-    try:
+    except Exception as e:
 
-        await member.timeout(
-            timedelta(minutes=minutes),
-            reason="Admin timeout"
-        )
-
-        await ctx.send(
-            f"⏳ {member.name} timed out for {minutes} minute(s)"
-        )
-
-    except:
+        print(e)
 
         await ctx.send(
             "Could not timeout user"
@@ -1875,6 +1805,7 @@ async def warn(
 ):
 
     user_id = member.id
+
     if (
         is_protected(member)
 
@@ -1889,29 +1820,33 @@ async def warn(
 
         return
 
-        await ctx.send(
-            "❌ You cannot warn the owner"
-        )
-
-    return
-
     if user_id not in user_warnings:
-        user_warnings[user_id] = 0
 
-    user_warnings[user_id] += 1
+        user_warnings[
+            user_id
+        ] = 0
+
+    user_warnings[
+        user_id
+    ] += 1
 
     save_warnings()
 
-    warns = user_warnings[user_id]
+    warns = user_warnings[
+        user_id
+    ]
 
     await ctx.send(
 
-        f"⚠️ {member.name} warned.\n"
+        f"⚠️ "
+        f"{member.name} warned.\n"
+
         f"Reason: {reason}\n"
+
         f"Warnings: {warns}"
 
     )
-    
+
     await send_mod_log(
 
         ctx.guild,
@@ -1922,18 +1857,29 @@ async def warn(
         f"Reason: {reason}"
 
     )
+
     # 3 warns = timeout
     if warns == 3:
 
         try:
 
             await member.timeout(
+
                 timedelta(minutes=5),
-                reason="Reached 3 warnings"
+
+                reason=
+                "Reached 3 warnings"
+
             )
 
             await ctx.send(
-                f"⏳ {member.name} timed out for 5 minutes (3 warnings)"
+
+                f"⏳ "
+                f"{member.name} "
+                f"timed out for "
+                f"5 minutes "
+                f"(3 warnings)"
+
             )
 
         except:
@@ -1945,20 +1891,28 @@ async def warn(
         try:
 
             await member.kick(
-                reason="Reached 5 warnings"
+
+                reason=
+                "Reached 5 warnings"
+
             )
 
             await ctx.send(
-                f"👢 {member.name} kicked (5 warnings)"
+
+                f"👢 "
+                f"{member.name} "
+                f"kicked "
+                f"(5 warnings)"
+
             )
+
             await send_mod_log(
 
                 ctx.guild,
 
                 f"👢 "
                 f"{ctx.author} kicked "
-                f"{member} | "
-                f"Reason: {reason}"
+                f"{member}"
 
             )
 
@@ -1971,20 +1925,28 @@ async def warn(
         try:
 
             await member.ban(
-                reason="Reached 7 warnings"
+
+                reason=
+                "Reached 7 warnings"
+
             )
 
             await ctx.send(
-                f"🔨 {member.name} banned (7 warnings)"
+
+                f"🔨 "
+                f"{member.name} "
+                f"banned "
+                f"(7 warnings)"
+
             )
+
             await send_mod_log(
 
                 ctx.guild,
 
                 f"🔨 "
                 f"{ctx.author} banned "
-                f"{member} | "
-                f"Reason: {reason}"
+                f"{member}"
 
             )
 
@@ -2385,44 +2347,6 @@ async def on_ready():
     if not cleanup_memory.is_running():
         cleanup_memory.start()
 
-    bot.loop.create_task(
-        voice_watchdog()
-    )
-
-    try:
-
-        with open(
-            "voice_channel.json",
-            "r"
-        ) as f:
-
-            data = json.load(f)
-
-        channel_id = data.get(
-            "channel_id"
-        )
-
-        if channel_id:
-
-            channel = bot.get_channel(
-                channel_id
-            )
-
-            if channel:
-
-                await channel.connect()
-
-                print(
-                    "Rejoined VC"
-                )
-
-    except Exception as e:
-
-        print(
-            "VC reconnect error:",
-            e
-        )
-
     if not health_monitor.is_running():
         health_monitor.start()
     if not cleanup_memory.is_running():
@@ -2564,14 +2488,6 @@ async def on_member_join(member):
                 f"`!verify`\n\n"
 
                 f"in #verify-here 😄"
-            )
-            await send_mod_log(
-
-                ctx.guild,
-
-                f"✅ "
-                f"{ctx.author} verified"
-
             )
 
         except:
@@ -3098,86 +3014,19 @@ async def on_voice_state_update(
     before,
     after
 ):
-    
-    # Bot VC tracking
+
+    # Ignore bot itself
     if member == bot.user:
         return
-        
+
+    # Ignore all bots except protected logic
     if member.bot:
         return
 
-        try:
-
-            # Bot moved to VC
-            if after.channel:
-
-                with open(
-                    "voice_channel.json",
-                    "w"
-                ) as f:
-
-                    json.dump(
-
-                        {
-                            "channel_id":
-                            after.channel.id
-                        },
-
-                        f
-
-                    )
-
-            # Bot disconnected
-            elif before.channel:
-            
-                await asyncio.sleep(5)
-            
-                with open(
-                    "voice_channel.json",
-                    "r"
-                ) as f:
-            
-                    data = json.load(f)
-            
-                channel_id = data.get(
-                    "channel_id"
-                )
-            
-                if channel_id:
-            
-                    channel = bot.get_channel(
-                        channel_id
-                    )
-            
-                    if channel:
-            
-                        await channel.connect()
-
-            channel_id = data.get(
-                "channel_id"
-            )
-
-            if channel_id:
-
-                channel = bot.get_channel(
-                    channel_id
-                )
-
-                if channel:
-
-                    await channel.connect()
-
-        except Exception as e:
-
-            print(
-                "VC tracking error:",
-                e
-            )
-
+    # Protect owner from VC troll system
+    if member.id == OWNER_ID:
         return
 
-
-# VC follow protection
     # VC follow protection
     if after.channel:
 
@@ -3188,12 +3037,15 @@ async def on_voice_state_update(
             m for m in guild.members
 
             if (
+
                 is_protected_vc_user(m)
 
                 and
+
                 m.voice
 
                 and
+
                 m.voice.channel
                 ==
                 after.channel
@@ -3263,8 +3115,12 @@ async def on_voice_state_update(
 
                     )
 
-                except:
-                    pass
+                except Exception as e:
+
+                    print(
+                        "VC troll error:",
+                        e
+                    )
 
     try:
 
@@ -3383,9 +3239,11 @@ async def on_voice_state_update(
                     for _ in range(8):
 
                         if (
+
                             member.id
                             not in
                             bouncing_users
+
                         ):
                             return
 
@@ -3399,8 +3257,12 @@ async def on_voice_state_update(
 
                         await asyncio.sleep(2)
 
-                except:
-                    pass
+                except Exception as e:
+
+                    print(
+                        "Bounce error:",
+                        e
+                    )
 
             asyncio.create_task(
                 bounce_user()
